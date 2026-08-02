@@ -17,7 +17,6 @@ final class BlackoutService {
     func toggle() {
         let wasBlackoutActive = touchBar.isBlackoutActive
         touchBar.toggle()
-
         if !wasBlackoutActive,
            touchBar.isBlackoutActive,
            preferences.includesKeyboardBacklight {

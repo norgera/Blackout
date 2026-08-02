@@ -2,10 +2,8 @@ import Cocoa
 
 final class TouchBarController: NSObject, NSTouchBarDelegate {
     static let shared = TouchBarController()
-
     private let trayIdentifier = NSTouchBarItem.Identifier("com.blackout.tray")
     private let blackoutIdentifier = NSTouchBarItem.Identifier("com.blackout.blackout")
-
     private var trayItem: NSCustomTouchBarItem?
     private var blackoutBar: NSTouchBar?
     private(set) var isBlackoutActive = false
@@ -14,43 +12,41 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
 
     @discardableResult
     func installTouchBarToggle() -> Bool {
-        guard trayItem == nil else { return true }
         guard PrivateTouchBarBridge.isSupported() else { return false }
-
+        if trayItem != nil {
+            PrivateTouchBarBridge.setControlStripPresence(
+                true,
+                identifier: trayIdentifier.rawValue
+            )
+            return true
+        }
         let item = NSCustomTouchBarItem(identifier: trayIdentifier)
         let button = NSButton(
             title: "",
             target: self,
             action: #selector(toggleFromTouchBar)
         )
-
         button.bezelStyle = .rounded
         button.image = BlackoutIcon.image()
         button.imagePosition = .imageOnly
         button.toolTip = "Toggle blackout"
         button.frame = NSRect(x: 0, y: 0, width: 44, height: 30)
-
         item.view = button
         trayItem = item
-
         PrivateTouchBarBridge.addSystemTrayItem(item)
         PrivateTouchBarBridge.setControlStripPresence(
             true,
             identifier: trayIdentifier.rawValue
         )
-
         return true
     }
 
     func uninstallTouchBarToggle() {
-        guard let trayItem else { return }
-
+        guard trayItem != nil else { return }
         PrivateTouchBarBridge.setControlStripPresence(
             false,
             identifier: trayIdentifier.rawValue
         )
-        PrivateTouchBarBridge.removeSystemTrayItem(trayItem)
-        self.trayItem = nil
     }
 
     func toggle() {
@@ -71,20 +67,14 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
 
     private func presentBlackout() {
         guard !isBlackoutActive else { return }
-
         PrivateTouchBarBridge.setSystemModalCloseBoxVisible(false)
-
         let bar = NSTouchBar()
         bar.delegate = self
-
         bar.defaultItemIdentifiers = [
             blackoutIdentifier
         ]
-
         bar.principalItemIdentifier = blackoutIdentifier
-
         blackoutBar = bar
-
         isBlackoutActive =
             PrivateTouchBarBridge.presentSystemModalTouchBar(
                 bar,
@@ -94,13 +84,10 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
 
     private func dismissBlackout() {
         guard isBlackoutActive, let blackoutBar else { return }
-
         PrivateTouchBarBridge.dismissSystemModalTouchBar(blackoutBar)
-
         self.blackoutBar = nil
         isBlackoutActive = false
         blackoutDismissedHandler?()
-
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.restoreTouchBarToggle()
         }
@@ -108,7 +95,6 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
 
     private func restoreTouchBarToggle() {
         guard let trayItem else { return }
-
         PrivateTouchBarBridge.setControlStripPresence(
             false,
             identifier: trayIdentifier.rawValue
@@ -128,15 +114,12 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
         guard identifier == blackoutIdentifier else {
             return nil
         }
-
         let item = NSCustomTouchBarItem(identifier: identifier)
-
         let button = BlackoutButton(
             title: "",
             target: self,
             action: #selector(restoreFromBlackout(_:))
         )
-
         button.isBordered = false
         button.focusRingType = .none
         button.setButtonType(.momentaryChange)
@@ -144,17 +127,13 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
         let widthConstraint = button.widthAnchor.constraint(
             greaterThanOrEqualToConstant: 1000
         )
-
         NSLayoutConstraint.activate([
             widthConstraint,
             button.heightAnchor.constraint(equalToConstant: 30)
         ])
-
         button.setContentHuggingPriority(.required, for: .horizontal)
         button.setContentCompressionResistancePriority(.required, for: .horizontal)
-
         item.view = button
-
         return item
     }
 }

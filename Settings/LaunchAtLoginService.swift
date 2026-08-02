@@ -10,7 +10,6 @@ final class LaunchAtLoginService {
 
     var isEnabled: Bool {
         guard #available(macOS 13.0, *) else { return false }
-
         switch SMAppService.mainApp.status {
         case .enabled, .requiresApproval:
             return true
@@ -21,7 +20,6 @@ final class LaunchAtLoginService {
 
     func setEnabled(_ enabled: Bool) {
         guard #available(macOS 13.0, *) else { return }
-
         let service = SMAppService.mainApp
         do {
             if enabled {

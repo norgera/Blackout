@@ -6,19 +6,7 @@ final class AppController: NSObject, NSApplicationDelegate {
     private let statusItem = NSStatusBar.system.statusItem(
         withLength: NSStatusItem.variableLength
     )
-    private lazy var settingsController = SettingsController(
-        preferences: preferences,
-        launchAtLogin: .shared,
-        touchBarButtonChanged: { [weak self] in
-            self?.applyTouchBarButtonVisibility($0)
-        },
-        menuBarButtonChanged: { [weak self] _ in
-            self?.applyMenuBarButtonVisibility()
-        },
-        dockIconChanged: { [weak self] _ in
-            self?.applyDockIconVisibility()
-        }
-    )
+    private var settingsController: SettingsController?
     private let includeKeyboardMenuItem = NSMenuItem(
         title: "Include Keyboard Backlight",
         action: #selector(toggleKeyboardSync),
@@ -27,15 +15,12 @@ final class AppController: NSObject, NSApplicationDelegate {
 
     override init() {
         super.init()
-
         if let button = statusItem.button {
             button.image = BlackoutIcon.image()
             button.imagePosition = .imageOnly
             button.toolTip = "Touch Bar Blackout"
         }
-
         blackoutService.configureTouchBarActions()
-
         configureMenu()
         applyMenuBarButtonVisibility()
         applyDockIconVisibility()
@@ -45,8 +30,8 @@ final class AppController: NSObject, NSApplicationDelegate {
         if preferences.isTouchBarButtonEnabled {
             blackoutService.installTouchBarButton()
         }
-
         updateIncludeKeyboardMenuItem()
+        openSettings()
     }
 
     private func configureMenu() {
@@ -58,11 +43,9 @@ final class AppController: NSObject, NSApplicationDelegate {
         )
         blackoutItem.target = self
         menu.addItem(blackoutItem)
-
         includeKeyboardMenuItem.target = self
         menu.addItem(includeKeyboardMenuItem)
         menu.addItem(.separator())
-
         let settingsItem = NSMenuItem(
             title: "Settings…",
             action: #selector(openSettings),
@@ -71,7 +54,6 @@ final class AppController: NSObject, NSApplicationDelegate {
         settingsItem.target = self
         menu.addItem(settingsItem)
         menu.addItem(.separator())
-
         let quitItem = NSMenuItem(
             title: "Quit Blackout",
             action: #selector(NSApplication.terminate(_:)),
@@ -88,6 +70,7 @@ final class AppController: NSObject, NSApplicationDelegate {
     @objc private func toggleKeyboardSync() {
         preferences.includesKeyboardBacklight.toggle()
         updateIncludeKeyboardMenuItem()
+        settingsController?.syncWithPreferences()
     }
 
     private func updateIncludeKeyboardMenuItem() {
@@ -96,8 +79,33 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     @objc private func openSettings() {
-        settingsController.showWindow(nil)
+        if settingsController == nil {
+            settingsController = makeSettingsController()
+        }
+        settingsController?.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func makeSettingsController() -> SettingsController {
+        SettingsController(
+            preferences: preferences,
+            launchAtLogin: .shared,
+            toggleBlackout: { [weak self] in
+                self?.blackoutService.toggle()
+            },
+            touchBarButtonChanged: { [weak self] in
+                self?.applyTouchBarButtonVisibility($0)
+            },
+            keyboardBacklightChanged: { [weak self] _ in
+                self?.updateIncludeKeyboardMenuItem()
+            },
+            menuBarButtonChanged: { [weak self] _ in
+                self?.applyMenuBarButtonVisibility()
+            },
+            dockIconChanged: { [weak self] _ in
+                self?.applyDockIconVisibility()
+            }
+        )
     }
 
     private func applyTouchBarButtonVisibility(_ enabled: Bool) {
@@ -115,10 +123,7 @@ final class AppController: NSObject, NSApplicationDelegate {
     private func applyDockIconVisibility() {
         let showDockIcon = preferences.isDockIconEnabled
         _ = NSApp.setActivationPolicy(showDockIcon ? .regular : .accessory)
-
         if !showDockIcon {
-            // Match the standard menu-bar-app sequence: immediately retain
-            // the active application after becoming an accessory app.
             NSApp.activate(ignoringOtherApps: true)
         }
     }

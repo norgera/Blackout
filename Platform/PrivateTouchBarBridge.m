@@ -10,19 +10,15 @@ typedef void (*DFRCloseBoxFn)(BOOL);
 static void *DFRHandle(void) {
     static void *handle = NULL;
     static dispatch_once_t onceToken;
-
     dispatch_once(&onceToken, ^{
         const char *paths[] = {
             "/System/Library/PrivateFrameworks/DFRFoundation.framework/DFRFoundation",
             "/System/Library/PrivateFrameworks/DFRFoundation.framework/Versions/A/DFRFoundation"
         };
-
         for (int i = 0; i < 2 && handle == NULL; i++) {
             handle = dlopen(paths[i], RTLD_NOW | RTLD_LOCAL);
         }
-
     });
-
     return handle;
 }
 
@@ -34,13 +30,11 @@ static void *DFRHandle(void) {
 + (void)setSystemModalCloseBoxVisible:(BOOL)visible {
     void *handle = DFRHandle();
     if (!handle) return;
-
     DFRCloseBoxFn fn =
         (DFRCloseBoxFn)dlsym(
             handle,
             "DFRSystemModalShowsCloseBoxWhenFrontMost"
         );
-
     if (fn) {
         fn(visible);
     }
@@ -50,13 +44,11 @@ static void *DFRHandle(void) {
                      identifier:(NSString *)identifier {
     void *handle = DFRHandle();
     if (!handle) return;
-
     DFRPresenceFn fn =
         (DFRPresenceFn)dlsym(
             handle,
             "DFRElementSetControlStripPresenceForIdentifier"
         );
-
     if (fn) {
         fn(identifier, present);
     }
@@ -64,7 +56,6 @@ static void *DFRHandle(void) {
 
 + (void)addSystemTrayItem:(NSTouchBarItem *)item {
     SEL selector = NSSelectorFromString(@"addSystemTrayItem:");
-
     if ([NSTouchBarItem respondsToSelector:selector]) {
         ((void (*)(id, SEL, id))objc_msgSend)(
             NSTouchBarItem.class,
@@ -76,7 +67,6 @@ static void *DFRHandle(void) {
 
 + (void)removeSystemTrayItem:(NSTouchBarItem *)item {
     SEL selector = NSSelectorFromString(@"removeSystemTrayItem:");
-
     if ([NSTouchBarItem respondsToSelector:selector]) {
         ((void (*)(id, SEL, id))objc_msgSend)(
             NSTouchBarItem.class,
@@ -89,23 +79,18 @@ static void *DFRHandle(void) {
 + (BOOL)presentSystemModalTouchBar:(NSTouchBar *)touchBar
                          placement:(NSInteger)placement {
     Class barClass = NSTouchBar.class;
-
     NSArray<NSString *> *selectorNames = @[
         @"presentSystemModalTouchBar:placement:systemTrayItemIdentifier:",
         @"presentSystemModalFunctionBar:placement:systemTrayItemIdentifier:",
         @"presentSystemModalFunctionBar:systemTrayItemIdentifier:"
     ];
-
     for (NSString *name in selectorNames) {
         SEL selector = NSSelectorFromString(name);
-
         if (![barClass respondsToSelector:selector]) {
             continue;
         }
-
         if ([name isEqualToString:
              @"presentSystemModalFunctionBar:systemTrayItemIdentifier:"]) {
-
             ((void (*)(id, SEL, id, id))objc_msgSend)(
                 barClass,
                 selector,
@@ -121,34 +106,27 @@ static void *DFRHandle(void) {
                 nil
             );
         }
-
         return YES;
     }
-
     return NO;
 }
 
 + (void)dismissSystemModalTouchBar:(NSTouchBar *)touchBar {
     Class barClass = NSTouchBar.class;
-
     NSArray<NSString *> *selectorNames = @[
         @"dismissSystemModalTouchBar:",
         @"dismissSystemModalFunctionBar:"
     ];
-
     for (NSString *name in selectorNames) {
         SEL selector = NSSelectorFromString(name);
-
         if ([barClass respondsToSelector:selector]) {
             ((void (*)(id, SEL, id))objc_msgSend)(
                 barClass,
                 selector,
                 touchBar
             );
-
             return;
         }
     }
 }
-
 @end

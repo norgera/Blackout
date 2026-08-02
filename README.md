@@ -7,12 +7,23 @@
 Hide your MacBook touch bar natively
 
 ## Installation
+> Blackout is currently unsigned and unnotarized, so the xattr command removes macOS quarantine after installation.
+
+### Homebrew
+```bash
+brew install --cask norgera/apps/blackout
+xattr -cr /Applications/Blackout.app
+```
 
 ### Manual
 
-Download the latest version of Blackout from the [Releases](../../releases/latest) page.
+Download the latest version [here](https://github.com/norgera/Blackout/releases/latest/download/Blackout.dmg).
 
 Open `Blackout.dmg` and move Blackout.app to your Applications folder.
+Then run: 
+```bash
+xattr -cr /Applications/Blackout.app
+```
 
 ## Requirements
 
@@ -20,10 +31,6 @@ Open `Blackout.dmg` and move Blackout.app to your Applications folder.
 - Touch Bar configured to **App Controls** with **Show Control Strip** enabled
 
 Blackout currently does not support the **Expanded Control Strip** mode.
-
-### Homebrew
-
-Coming soon.
 
 ## Features
 

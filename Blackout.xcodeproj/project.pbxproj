@@ -1,0 +1,385 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000000000000000000002 /* TouchBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* TouchBarController.swift */; };
+		A10000000000000000000003 /* PrivateTouchBarBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* PrivateTouchBarBridge.m */; };
+		D8B2FAFE301EA1000038AB4E /* BlackoutIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FAFD301EA1000038AB4E /* BlackoutIcon.swift */; };
+		A10000000000000000000004 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* Cocoa.framework */; };
+		D8B2FAFA301E96460038AB4E /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FAF9301E96430038AB4E /* main.swift */; };
+		D8B2FB02301EB0000038AB4E /* AppController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FB01301EB0000038AB4E /* AppController.swift */; };
+		D8B2FB04301EB0000038AB4E /* KeyboardBacklightController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FB03301EB0000038AB4E /* KeyboardBacklightController.swift */; };
+		D8B2FB06301EB0000038AB4E /* SettingsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FB05301EB0000038AB4E /* SettingsController.swift */; };
+		D8B2FB08301EB0000038AB4E /* PreferencesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FB07301EB0000038AB4E /* PreferencesService.swift */; };
+		D8B2FB0A301EB0000038AB4E /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FB09301EB0000038AB4E /* LaunchAtLoginService.swift */; };
+		D8B2FB0C301EB0000038AB4E /* BlackoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FB0B301EB0000038AB4E /* BlackoutService.swift */; };
+		D8B2FB0E301EB0000038AB4E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D8B2FB0D301EB0000038AB4E /* Assets.xcassets */; };
+		D8B2FC0A301EB0000038AB4E /* KeyboardBacklightBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = D8B2FC08301EB0000038AB4E /* KeyboardBacklightBridge.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B10000000000000000000002 /* TouchBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchBarController.swift; sourceTree = "<group>"; };
+		B10000000000000000000003 /* PrivateTouchBarBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PrivateTouchBarBridge.m; sourceTree = "<group>"; };
+		B10000000000000000000004 /* PrivateTouchBarBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PrivateTouchBarBridge.h; sourceTree = "<group>"; };
+		B10000000000000000000005 /* Blackout-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Blackout-Bridging-Header.h"; sourceTree = "<group>"; };
+		B10000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B10000000000000000000007 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
+		B10000000000000000000008 /* Blackout.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Blackout.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D8B2FAF9301E96430038AB4E /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		D8B2FAFD301EA1000038AB4E /* BlackoutIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlackoutIcon.swift; sourceTree = "<group>"; };
+		D8B2FB01301EB0000038AB4E /* AppController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppController.swift; sourceTree = "<group>"; };
+		D8B2FB03301EB0000038AB4E /* KeyboardBacklightController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardBacklightController.swift; sourceTree = "<group>"; };
+		D8B2FB05301EB0000038AB4E /* SettingsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsController.swift; sourceTree = "<group>"; };
+		D8B2FB07301EB0000038AB4E /* PreferencesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesService.swift; sourceTree = "<group>"; };
+		D8B2FB09301EB0000038AB4E /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
+		D8B2FB0B301EB0000038AB4E /* BlackoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlackoutService.swift; sourceTree = "<group>"; };
+		D8B2FB0D301EB0000038AB4E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D8B2FC08301EB0000038AB4E /* KeyboardBacklightBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = KeyboardBacklightBridge.m; sourceTree = "<group>"; };
+		D8B2FC09301EB0000038AB4E /* KeyboardBacklightBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KeyboardBacklightBridge.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C10000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000004 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D10000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				D10000000000000000000002 /* Blackout */,
+				D10000000000000000000003 /* Frameworks */,
+				D10000000000000000000004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D10000000000000000000002 /* Blackout */ = {
+			isa = PBXGroup;
+			children = (
+				D8B2FC01301EB0000038AB4E /* App */,
+				D8B2FC02301EB0000038AB4E /* Blackout */,
+				D8B2FC03301EB0000038AB4E /* Settings */,
+				D8B2FC06301EB0000038AB4E /* Platform */,
+				D8B2FC07301EB0000038AB4E /* Resources */,
+			);
+			name = Blackout;
+			sourceTree = "<group>";
+		};
+		D8B2FC01301EB0000038AB4E /* App */ = {
+			isa = PBXGroup;
+			children = (
+				D8B2FAF9301E96430038AB4E /* main.swift */,
+				D8B2FB01301EB0000038AB4E /* AppController.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D8B2FC02301EB0000038AB4E /* Blackout */ = {
+			isa = PBXGroup;
+			children = (
+				D8B2FB0B301EB0000038AB4E /* BlackoutService.swift */,
+				B10000000000000000000002 /* TouchBarController.swift */,
+				D8B2FB03301EB0000038AB4E /* KeyboardBacklightController.swift */,
+				D8B2FAFD301EA1000038AB4E /* BlackoutIcon.swift */,
+			);
+			path = Blackout;
+			sourceTree = "<group>";
+		};
+		D8B2FC03301EB0000038AB4E /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				D8B2FB05301EB0000038AB4E /* SettingsController.swift */,
+				D8B2FB07301EB0000038AB4E /* PreferencesService.swift */,
+				D8B2FB09301EB0000038AB4E /* LaunchAtLoginService.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		D8B2FC06301EB0000038AB4E /* Platform */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000003 /* PrivateTouchBarBridge.m */,
+				B10000000000000000000004 /* PrivateTouchBarBridge.h */,
+				D8B2FC08301EB0000038AB4E /* KeyboardBacklightBridge.m */,
+				D8B2FC09301EB0000038AB4E /* KeyboardBacklightBridge.h */,
+				B10000000000000000000005 /* Blackout-Bridging-Header.h */,
+			);
+			path = Platform;
+			sourceTree = "<group>";
+		};
+		D8B2FC07301EB0000038AB4E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				D8B2FB0D301EB0000038AB4E /* Assets.xcassets */,
+				B10000000000000000000006 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		D10000000000000000000003 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000007 /* Cocoa.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D10000000000000000000004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B10000000000000000000008 /* Blackout.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E10000000000000000000001 /* Blackout */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F10000000000000000000002 /* Build configuration list for PBXNativeTarget "Blackout" */;
+			buildPhases = (
+				C10000000000000000000002 /* Sources */,
+				C10000000000000000000001 /* Frameworks */,
+				C10000000000000000000003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Blackout;
+			productName = Blackout;
+			productReference = B10000000000000000000008 /* Blackout.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E20000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					E10000000000000000000001 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = F10000000000000000000001 /* Build configuration list for PBXProject "Blackout" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D10000000000000000000001;
+			productRefGroup = D10000000000000000000004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E10000000000000000000001 /* Blackout */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C10000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D8B2FB0E301EB0000038AB4E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C10000000000000000000002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000002 /* TouchBarController.swift in Sources */,
+				D8B2FB02301EB0000038AB4E /* AppController.swift in Sources */,
+				D8B2FB06301EB0000038AB4E /* SettingsController.swift in Sources */,
+				D8B2FB04301EB0000038AB4E /* KeyboardBacklightController.swift in Sources */,
+				D8B2FB0C301EB0000038AB4E /* BlackoutService.swift in Sources */,
+				D8B2FB08301EB0000038AB4E /* PreferencesService.swift in Sources */,
+				D8B2FB0A301EB0000038AB4E /* LaunchAtLoginService.swift in Sources */,
+				D8B2FAFE301EA1000038AB4E /* BlackoutIcon.swift in Sources */,
+				D8B2FAFA301E96460038AB4E /* main.swift in Sources */,
+				A10000000000000000000003 /* PrivateTouchBarBridge.m in Sources */,
+				D8B2FC0A301EB0000038AB4E /* KeyboardBacklightBridge.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F20000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F20000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		F20000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.Blackout;
+				PRODUCT_NAME = Blackout;
+				SWIFT_OBJC_BRIDGING_HEADER = "Platform/Blackout-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		F20000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.Blackout;
+				PRODUCT_NAME = Blackout;
+				SWIFT_OBJC_BRIDGING_HEADER = "Platform/Blackout-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F10000000000000000000001 /* Build configuration list for PBXProject "Blackout" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20000000000000000000001 /* Debug */,
+				F20000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F10000000000000000000002 /* Build configuration list for PBXNativeTarget "Blackout" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F20000000000000000000003 /* Debug */,
+				F20000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E20000000000000000000001 /* Project object */;
+}

@@ -32,6 +32,16 @@ final class BlackoutService {
         touchBar.uninstallTouchBarToggle()
     }
 
+    func applyKeyboardBacklightPreference() {
+        guard touchBar.isBlackoutActive else { return }
+
+        if preferences.includesKeyboardBacklight {
+            _ = keyboardBacklight.turnOffForBlackout()
+        } else {
+            keyboardBacklight.restoreAfterBlackoutIfNeeded()
+        }
+    }
+
     private func restoreKeyboardBacklightIfNeeded() {
         keyboardBacklight.restoreAfterBlackoutIfNeeded()
     }

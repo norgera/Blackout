@@ -132,17 +132,13 @@ final class SettingsController: NSWindowController {
         return separator
     }
 
-    private func refresh() {
+    func refresh() {
         touchBarButton.state = preferences.isTouchBarButtonEnabled ? .on : .off
         keyboardBacklightButton.state = preferences.includesKeyboardBacklight ? .on : .off
         menuBarButton.state = preferences.isMenuBarButtonEnabled ? .on : .off
         dockIconButton.state = preferences.isDockIconEnabled ? .on : .off
         launchAtLoginButton.isEnabled = launchAtLogin.isAvailable
         launchAtLoginButton.state = launchAtLogin.isEnabled ? .on : .off
-    }
-
-    func syncWithPreferences() {
-        refresh()
     }
 
     @objc private func refreshFromSystem() {

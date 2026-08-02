@@ -69,8 +69,9 @@ final class AppController: NSObject, NSApplicationDelegate {
 
     @objc private func toggleKeyboardSync() {
         preferences.includesKeyboardBacklight.toggle()
+        blackoutService.applyKeyboardBacklightPreference()
         updateIncludeKeyboardMenuItem()
-        settingsController?.syncWithPreferences()
+        settingsController?.refresh()
     }
 
     private func updateIncludeKeyboardMenuItem() {
@@ -97,6 +98,7 @@ final class AppController: NSObject, NSApplicationDelegate {
                 self?.applyTouchBarButtonVisibility($0)
             },
             keyboardBacklightChanged: { [weak self] _ in
+                self?.blackoutService.applyKeyboardBacklightPreference()
                 self?.updateIncludeKeyboardMenuItem()
             },
             menuBarButtonChanged: { [weak self] _ in

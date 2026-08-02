@@ -94,7 +94,8 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
     }
 
     private func restoreTouchBarToggle() {
-        guard let trayItem else { return }
+        guard PreferencesService.shared.isTouchBarButtonEnabled,
+              let trayItem else { return }
         PrivateTouchBarBridge.setControlStripPresence(
             false,
             identifier: trayIdentifier.rawValue

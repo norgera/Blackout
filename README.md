@@ -9,10 +9,9 @@ Hide your MacBook touch bar natively
 ## Installation
 > Blackout is currently unsigned and unnotarized, so the xattr command removes macOS quarantine after installation.
 
-### Homebrew
+### Terminal (recommended)
 ```bash
-brew install --cask norgera/apps/blackout
-xattr -cr /Applications/Blackout.app
+curl -fsSL https://raw.githubusercontent.com/norgera/Blackout/main/install.sh | bash
 ```
 
 ### Manual

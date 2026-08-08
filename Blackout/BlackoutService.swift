@@ -42,6 +42,18 @@ final class BlackoutService {
         }
     }
 
+    func restore() {
+        if touchBar.isBlackoutActive {
+            touchBar.dismissBlackoutIfNeeded()
+        } else {
+            keyboardBacklight.restoreAfterBlackoutIfNeeded()
+        }
+    }
+
+    func recoverInterruptedKeyboardBacklightIfNeeded() {
+        keyboardBacklight.restoreAfterBlackoutIfNeeded()
+    }
+
     private func restoreKeyboardBacklightIfNeeded() {
         keyboardBacklight.restoreAfterBlackoutIfNeeded()
     }

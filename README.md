@@ -35,9 +35,13 @@ Blackout currently does not support the **Expanded Control Strip** mode.
 ## Features
 
 - Black out the Touch Bar while preserving Apple's native controls
-- Toggle from the Touch Bar or menu bar
+- Toggle from the Touch Bar, menu bar, Settings, or a configurable double-press keyboard shortcut
+- Optionally require another toggle instead of allowing a Touch Bar tap to restore its controls
 - Optional keyboard backlight control with brightness restoration
-- Launch at login
+- Configurable double-press timing and support for any keyboard key, including modifier keys
+- Optional Touch Bar button, menu bar button, and Dock presence
+- Start automatically at login without opening Settings
+- Manually check GitHub for new releases from Settings
 
 ## How it works
 

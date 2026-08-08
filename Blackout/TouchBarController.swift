@@ -53,6 +53,10 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
         isBlackoutActive ? dismissBlackout() : presentBlackout()
     }
 
+    func dismissBlackoutIfNeeded() {
+        dismissBlackout()
+    }
+
     @objc private func toggleFromTouchBar(_ sender: Any?) {
         if let toggleHandler {
             toggleHandler()
@@ -62,6 +66,9 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
     }
 
     @objc private func restoreFromBlackout(_ sender: Any?) {
+        guard PreferencesService.shared.isTouchBarTapToRestoreEnabled else {
+            return
+        }
         dismissBlackout()
     }
 
@@ -80,11 +87,16 @@ final class TouchBarController: NSObject, NSTouchBarDelegate {
                 bar,
                 placement: 1
             )
+        if !isBlackoutActive {
+            blackoutBar = nil
+            PrivateTouchBarBridge.setSystemModalCloseBoxVisible(true)
+        }
     }
 
     private func dismissBlackout() {
         guard isBlackoutActive, let blackoutBar else { return }
         PrivateTouchBarBridge.dismissSystemModalTouchBar(blackoutBar)
+        PrivateTouchBarBridge.setSystemModalCloseBoxVisible(true)
         self.blackoutBar = nil
         isBlackoutActive = false
         blackoutDismissedHandler?()

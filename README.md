@@ -7,7 +7,6 @@
 Hide your MacBook touch bar natively
 
 ## Installation
-> Blackout is currently unsigned and unnotarized, so the xattr command removes macOS quarantine after installation.
 
 ### Terminal (recommended)
 ```bash
@@ -23,6 +22,7 @@ Then run:
 ```bash
 xattr -cr /Applications/Blackout.app
 ```
+> Blackout is currently unsigned and unnotarized, so the xattr command removes macOS quarantine after installation.
 
 ## Requirements
 
@@ -41,6 +41,9 @@ Blackout currently does not support the **Expanded Control Strip** mode.
 - Optional Touch Bar button, menu bar button, and Dock presence
 - Start automatically at login without opening Settings
 - Manually check GitHub for new releases from Settings
+
+<img width="444" height="572" alt="Screenshot 2026-08-08 at 12 20 45 PM" src="https://github.com/user-attachments/assets/69ac2e06-d8e0-49ad-888b-02b0fc7484a6" />
+
 
 ## How it works
 

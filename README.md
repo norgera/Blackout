@@ -1,5 +1,5 @@
 # Blackout
-
+![Downloads](https://img.shields.io/github/downloads/norgera/Blackout/total)
 <p align="center"><img src="https://github.com/norgera/Blackout/raw/main/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-256.png" width="120"></p>
 
 <p align="center"><img width="2428" height="694" alt="Blackout" src="https://github.com/user-attachments/assets/6be9bc89-876f-4664-b292-03b00d3f939a" /></p>

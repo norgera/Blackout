@@ -29,8 +29,6 @@ xattr -cr /Applications/Blackout.app
 - A MacBook Pro with Touch Bar
 - Touch Bar configured to **App Controls** with **Show Control Strip** enabled
 
-Blackout currently does not support the **Expanded Control Strip** mode.
-
 ## Features
 
 - Black out the Touch Bar while preserving Apple's native controls

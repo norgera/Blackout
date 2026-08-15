@@ -1,12 +1,26 @@
 import Cocoa
 import ApplicationServices
 
+enum DoubleKeyShortcutChange {
+    case enabled(Bool)
+    case configurationChanged
+}
+
+enum DoubleKeyShortcutMonitoringState: Equatable {
+    case disabled
+    case missingKey
+    case permissionRequired
+    case active
+    case failedToStart
+}
+
 final class DoubleKeyShortcutController {
     private let preferences: PreferencesService
     private let toggleHandler: () -> Void
     private var eventTap: CFMachPort?
     private var eventTapSource: CFRunLoopSource?
     private var lastPressTimestamp: TimeInterval?
+    private(set) var monitoringState = DoubleKeyShortcutMonitoringState.disabled
 
     init(
         preferences: PreferencesService,
@@ -20,15 +34,34 @@ final class DoubleKeyShortcutController {
         removeEventTap()
     }
 
-    func updateMonitoring() {
-        guard preferences.isDoubleKeyShortcutEnabled,
-              preferences.doubleKeyShortcutKeyCode != nil,
-              Self.hasAccessibilityPermission else {
+    @discardableResult
+    func updateMonitoring() -> DoubleKeyShortcutMonitoringState {
+        guard preferences.isDoubleKeyShortcutEnabled else {
             removeEventTap()
-            return
+            monitoringState = .disabled
+            return monitoringState
         }
 
-        guard eventTap == nil else { return }
+        guard preferences.doubleKeyShortcutKeyCode != nil else {
+            removeEventTap()
+            monitoringState = .missingKey
+            return monitoringState
+        }
+
+        guard Self.hasKeyboardMonitoringPermission else {
+            removeEventTap()
+            monitoringState = .permissionRequired
+            return monitoringState
+        }
+
+        if let eventTap {
+            if !CGEvent.tapIsEnabled(tap: eventTap) {
+                CGEvent.tapEnable(tap: eventTap, enable: true)
+            }
+            monitoringState = .active
+            return monitoringState
+        }
+
         let eventMask = CGEventMask(1) << CGEventType.keyDown.rawValue |
             CGEventMask(1) << CGEventType.flagsChanged.rawValue
         guard let eventTap = CGEvent.tapCreate(
@@ -39,7 +72,8 @@ final class DoubleKeyShortcutController {
             callback: Self.eventTapCallback,
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            return
+            monitoringState = .failedToStart
+            return monitoringState
         }
         let source = CFMachPortCreateRunLoopSource(
             kCFAllocatorDefault,
@@ -50,14 +84,23 @@ final class DoubleKeyShortcutController {
         eventTapSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
+        monitoringState = .active
+        return monitoringState
     }
 
-    static var hasAccessibilityPermission: Bool {
-        AXIsProcessTrusted()
+    static var hasKeyboardMonitoringPermission: Bool {
+        if #available(macOS 10.15, *) {
+            return CGPreflightListenEventAccess()
+        }
+        return AXIsProcessTrusted()
     }
 
-    static func requestAccessibilityPermission() {
-        guard !hasAccessibilityPermission else { return }
+    static func requestKeyboardMonitoringPermission() {
+        guard !hasKeyboardMonitoringPermission else { return }
+        if #available(macOS 10.15, *) {
+            _ = CGRequestListenEventAccess()
+            return
+        }
         let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
         let options = [promptKey as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)

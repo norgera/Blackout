@@ -51,6 +51,10 @@ application controls.
 
 When Blackout is dismissed, the original Touch Bar is restored.
 
+The global double-press shortcut uses a listen-only macOS event tap. On first
+enable, allow **Blackout** in **System Settings → Privacy & Security → Input
+Monitoring**. Changing the trigger key does not request the permission again.
+
 ## Building
 
 Clone the repository and open:

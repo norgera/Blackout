@@ -13,8 +13,8 @@ final class AppController: NSObject, NSApplicationDelegate {
         }
     )
     private var settingsController: SettingsController?
-    private var isAwaitingAccessibilityPermission = false
-    private var accessibilityRefreshWorkItem: DispatchWorkItem?
+    private var keyboardMonitoringRefreshTimer: Timer?
+    private var keyboardMonitoringRefreshWorkItem: DispatchWorkItem?
     private let includeKeyboardMenuItem = NSMenuItem(
         title: "Include keyboard backlight",
         action: #selector(toggleKeyboardSync),
@@ -48,7 +48,8 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     deinit {
-        accessibilityRefreshWorkItem?.cancel()
+        stopKeyboardMonitoringPolling()
+        keyboardMonitoringRefreshWorkItem?.cancel()
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
@@ -60,13 +61,13 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        refreshAccessibilityState()
-        accessibilityRefreshWorkItem?.cancel()
+        refreshKeyboardMonitoringState()
+        keyboardMonitoringRefreshWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
             guard NSApp.isActive else { return }
-            self?.refreshAccessibilityState()
+            self?.refreshKeyboardMonitoringState()
         }
-        accessibilityRefreshWorkItem = workItem
+        keyboardMonitoringRefreshWorkItem = workItem
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.75,
             execute: workItem
@@ -74,7 +75,10 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     private func start(shouldOpenSettings: Bool) {
-        updateDoubleKeyShortcut()
+        let monitoringState = updateDoubleKeyShortcut()
+        if monitoringState == .permissionRequired {
+            startKeyboardMonitoringPolling()
+        }
         if preferences.isTouchBarButtonEnabled {
             blackoutService.installTouchBarButton()
         }
@@ -151,18 +155,29 @@ final class AppController: NSObject, NSApplicationDelegate {
                 self?.blackoutService.applyKeyboardBacklightPreference()
                 self?.updateIncludeKeyboardMenuItem()
             },
-            doubleKeyShortcutPermissionGranted: {
-                DoubleKeyShortcutController.hasAccessibilityPermission
+            doubleKeyShortcutMonitoringState: { [weak self] in
+                self?.doubleKeyShortcut.monitoringState ?? .disabled
             },
-            doubleKeyShortcutChanged: { [weak self] shouldRequestAccess in
-                if shouldRequestAccess {
-                    self?.isAwaitingAccessibilityPermission =
-                        !DoubleKeyShortcutController.hasAccessibilityPermission
-                    self?.ensureAccessibilityPermission()
-                } else {
-                    self?.isAwaitingAccessibilityPermission = false
+            doubleKeyShortcutChanged: { [weak self] change in
+                guard let self else { return }
+                switch change {
+                case let .enabled(enabled):
+                    if enabled {
+                        let state = updateDoubleKeyShortcut()
+                        if state == .permissionRequired {
+                            requestKeyboardMonitoringPermission()
+                            startKeyboardMonitoringPolling()
+                        }
+                    } else {
+                        stopKeyboardMonitoringPolling()
+                        updateDoubleKeyShortcut()
+                    }
+                case .configurationChanged:
+                    // Reconfigure the existing event tap without requesting
+                    // TCC access again. Choosing a key is not permission intent.
+                    updateDoubleKeyShortcut()
                 }
-                self?.updateDoubleKeyShortcut()
+                settingsController?.refresh()
             },
             menuBarButtonChanged: { [weak self] _ in
                 self?.applyMenuBarButtonVisibility()
@@ -193,27 +208,54 @@ final class AppController: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func updateDoubleKeyShortcut() {
+    @discardableResult
+    private func updateDoubleKeyShortcut() -> DoubleKeyShortcutMonitoringState {
         doubleKeyShortcut.updateMonitoring()
     }
 
-    private func refreshAccessibilityState() {
-        let isPermissionGranted =
-            DoubleKeyShortcutController.hasAccessibilityPermission
-        if isPermissionGranted && isAwaitingAccessibilityPermission {
-            preferences.isDoubleKeyShortcutEnabled = true
-            isAwaitingAccessibilityPermission = false
+    private func refreshKeyboardMonitoringState() {
+        let state = updateDoubleKeyShortcut()
+        if state != .permissionRequired {
+            stopKeyboardMonitoringPolling()
         }
-        updateDoubleKeyShortcut()
         settingsController?.refresh()
     }
 
-    private func ensureAccessibilityPermission() {
-        guard !DoubleKeyShortcutController.hasAccessibilityPermission else {
-            isAwaitingAccessibilityPermission = false
+    private func requestKeyboardMonitoringPermission() {
+        guard !DoubleKeyShortcutController.hasKeyboardMonitoringPermission else {
             return
         }
-        DoubleKeyShortcutController.requestAccessibilityPermission()
+        DoubleKeyShortcutController.requestKeyboardMonitoringPermission()
+    }
+
+    private func startKeyboardMonitoringPolling() {
+        guard preferences.isDoubleKeyShortcutEnabled,
+              doubleKeyShortcut.monitoringState == .permissionRequired,
+              keyboardMonitoringRefreshTimer == nil else {
+            return
+        }
+
+        var attemptsRemaining = 120
+        let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] timer in
+            guard let self else {
+                timer.invalidate()
+                return
+            }
+            attemptsRemaining -= 1
+            refreshKeyboardMonitoringState()
+            if doubleKeyShortcut.monitoringState != .permissionRequired ||
+                attemptsRemaining <= 0 ||
+                !preferences.isDoubleKeyShortcutEnabled {
+                stopKeyboardMonitoringPolling()
+            }
+        }
+        keyboardMonitoringRefreshTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func stopKeyboardMonitoringPolling() {
+        keyboardMonitoringRefreshTimer?.invalidate()
+        keyboardMonitoringRefreshTimer = nil
     }
 
     private var wasLaunchedAsLoginItem: Bool {

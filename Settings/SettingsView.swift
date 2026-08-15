@@ -39,12 +39,17 @@ struct SettingsView: View {
             settingsCard(title: "Double-press shortcut") {
                 settingToggle(
                     title: "Enable shortcut",
-                    description: "Double-press a key anywhere to toggle blackout. “Press window” is the allowed delay. Requires Accessibility.",
+                    description: "Double-press a key anywhere to toggle blackout. “Press window” is the allowed delay. Requires Input Monitoring.",
                     value: binding(
                         get: { model.isDoubleKeyShortcutEnabled },
                         set: model.setDoubleKeyShortcutEnabled
                     )
                 )
+                if let status = model.shortcutStatus {
+                    Text(status)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 HStack {
                     Text("Trigger key")
                     Spacer()

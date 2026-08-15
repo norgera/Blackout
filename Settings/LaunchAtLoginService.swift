@@ -15,7 +15,14 @@ final class LaunchAtLoginService {
 
     var isEnabled: Bool {
         if #available(macOS 13.0, *) {
-            return SMAppService.mainApp.status == .enabled
+            switch SMAppService.mainApp.status {
+            case .enabled, .requiresApproval:
+                return true
+            case .notRegistered, .notFound:
+                return false
+            @unknown default:
+                return false
+            }
         }
         return isLegacyEnabled
     }
@@ -29,15 +36,36 @@ final class LaunchAtLoginService {
             return
         }
         let service = SMAppService.mainApp
-        if enabled {
-            if service.status == .requiresApproval {
-                SMAppService.openSystemSettingsLoginItems()
-            } else if service.status != .enabled {
-                try? service.register()
+        do {
+            if enabled {
+                switch service.status {
+                case .enabled:
+                    return
+                case .requiresApproval:
+                    SMAppService.openSystemSettingsLoginItems()
+                case .notRegistered, .notFound:
+                    try service.register()
+                    if service.status == .requiresApproval {
+                        SMAppService.openSystemSettingsLoginItems()
+                    }
+                @unknown default:
+                    try service.register()
+                }
+            } else {
+                switch service.status {
+                case .enabled, .requiresApproval:
+                    try service.unregister()
+                case .notRegistered, .notFound:
+                    break
+                @unknown default:
+                    break
+                }
             }
-        } else if service.status == .enabled ||
-                    service.status == .requiresApproval {
-            try? service.unregister()
+        } catch {
+            NSLog(
+                "Blackout: unable to update launch-at-login: %@",
+                "\(error)"
+            )
         }
     }
 
@@ -57,13 +85,25 @@ final class LaunchAtLoginService {
         let defaults = UserDefaults.standard
         guard !defaults.bool(forKey: Self.migrationKey) else { return }
         let legacyWasEnabled = isLegacyEnabled
-        _ = SMLoginItemSetEnabled(
-            Self.legacyIdentifier as CFString,
-            false
-        )
-        if legacyWasEnabled && SMAppService.mainApp.status != .enabled {
-            try? SMAppService.mainApp.register()
+        guard legacyWasEnabled else {
+            defaults.set(true, forKey: Self.migrationKey)
+            return
         }
-        defaults.set(true, forKey: Self.migrationKey)
+
+        do {
+            try SMAppService.mainApp.register()
+
+            // Remove the old registration only after the replacement succeeds.
+            _ = SMLoginItemSetEnabled(
+                Self.legacyIdentifier as CFString,
+                false
+            )
+            defaults.set(true, forKey: Self.migrationKey)
+        } catch {
+            NSLog(
+                "Blackout: login item migration failed: %@",
+                "\(error)"
+            )
+        }
     }
 }

@@ -1,5 +1,6 @@
 import Cocoa
 import ApplicationServices
+import IOKit.hidsystem
 
 final class DoubleKeyShortcutController {
     private let preferences: PreferencesService
@@ -20,15 +21,30 @@ final class DoubleKeyShortcutController {
         removeEventTap()
     }
 
-    func updateMonitoring() {
+    var isMonitoring: Bool {
         guard preferences.isDoubleKeyShortcutEnabled,
               preferences.doubleKeyShortcutKeyCode != nil,
-              Self.hasAccessibilityPermission else {
+              Self.hasMonitoringPermission,
+              let eventTap else { return false }
+        return CGEvent.tapIsEnabled(tap: eventTap)
+    }
+
+    func updateMonitoring() {
+        guard preferences.isDoubleKeyShortcutEnabled,
+              preferences.doubleKeyShortcutKeyCode != nil else {
             removeEventTap()
             return
         }
 
-        guard eventTap == nil else { return }
+        guard Self.hasMonitoringPermission else {
+            removeEventTap()
+            return
+        }
+
+        if let eventTap {
+            CGEvent.tapEnable(tap: eventTap, enable: true)
+            return
+        }
         let eventMask = CGEventMask(1) << CGEventType.keyDown.rawValue |
             CGEventMask(1) << CGEventType.flagsChanged.rawValue
         guard let eventTap = CGEvent.tapCreate(
@@ -52,15 +68,71 @@ final class DoubleKeyShortcutController {
         CGEvent.tapEnable(tap: eventTap, enable: true)
     }
 
-    static var hasAccessibilityPermission: Bool {
-        AXIsProcessTrusted()
+    static var hasMonitoringPermission: Bool {
+        if #available(macOS 10.15, *) {
+            return IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) ==
+                kIOHIDAccessTypeGranted
+        }
+        return AXIsProcessTrusted()
     }
 
-    static func requestAccessibilityPermission() {
-        guard !hasAccessibilityPermission else { return }
+    func requestMonitoringPermission() {
+        guard !Self.hasMonitoringPermission else { return }
+        if #available(macOS 10.15, *) {
+            // Make the running app discoverable by the permission settings UI.
+            _ = LSRegisterURL(Bundle.main.bundleURL as CFURL, true)
+            let access = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent)
+            if access == kIOHIDAccessTypeDenied, eventTap != nil {
+                removeEventTap()
+            }
+            switch access {
+            case kIOHIDAccessTypeUnknown:
+                _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+            case kIOHIDAccessTypeDenied:
+                showPermissionRestartAlert()
+            default:
+                break
+            }
+            return
+        }
         let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
         let options = [promptKey as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
+    }
+
+    @available(macOS 10.15, *)
+    private func showPermissionRestartAlert() {
+        let alert = NSAlert()
+        alert.messageText = "Restart Blackout"
+        alert.informativeText = "Restart Blackout for changes in System Settings to take effect."
+        alert.addButton(withTitle: "Quit & Reopen")
+        alert.addButton(withTitle: "Later")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(
+            at: Bundle.main.bundleURL,
+            configuration: configuration
+        ) { _, error in
+            DispatchQueue.main.async {
+                guard error == nil else {
+                    Self.showRelaunchError(error)
+                    return
+                }
+                NSApp.windows.forEach { $0.orderOut(nil) }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    private static func showRelaunchError(_ error: Error?) {
+        let alert = NSAlert()
+        alert.messageText = "Blackout could not reopen"
+        alert.informativeText = error?.localizedDescription ??
+            "Quit and reopen Blackout manually."
+        alert.runModal()
     }
 
     private static let eventTapCallback: CGEventTapCallBack = {

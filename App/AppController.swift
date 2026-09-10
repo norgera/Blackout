@@ -1,6 +1,9 @@
 import Cocoa
 
 final class AppController: NSObject, NSApplicationDelegate {
+    private static let restoreSettingsAfterRelaunchKey =
+        "restoreSettingsAfterRelaunch"
+
     private let preferences = PreferencesService.shared
     private let blackoutService = BlackoutService()
     private let statusItem = NSStatusBar.system.statusItem(
@@ -13,8 +16,7 @@ final class AppController: NSObject, NSApplicationDelegate {
         }
     )
     private var settingsController: SettingsController?
-    private var isAwaitingAccessibilityPermission = false
-    private var accessibilityRefreshWorkItem: DispatchWorkItem?
+    private var shortcutRefreshWorkItem: DispatchWorkItem?
     private let includeKeyboardMenuItem = NSMenuItem(
         title: "Include keyboard backlight",
         action: #selector(toggleKeyboardSync),
@@ -29,6 +31,12 @@ final class AppController: NSObject, NSApplicationDelegate {
             button.imagePosition = .imageOnly
             button.toolTip = "Touch Bar Blackout"
         }
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(refreshShortcutState),
+            name: NSWorkspace.didActivateApplicationNotification,
+            object: nil
+        )
         blackoutService.configureTouchBarActions()
         configureMenu()
         applyMenuBarButtonVisibility()
@@ -48,25 +56,30 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     deinit {
-        accessibilityRefreshWorkItem?.cancel()
+        shortcutRefreshWorkItem?.cancel()
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        let shouldOpenSettings = !wasLaunchedAsLoginItem
+        let defaults = UserDefaults.standard
+        let shouldRestoreSettings = defaults.bool(
+            forKey: Self.restoreSettingsAfterRelaunchKey
+        )
+        defaults.removeObject(forKey: Self.restoreSettingsAfterRelaunchKey)
+        let shouldOpenSettings = shouldRestoreSettings || !wasLaunchedAsLoginItem
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.start(shouldOpenSettings: shouldOpenSettings)
         }
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        refreshAccessibilityState()
-        accessibilityRefreshWorkItem?.cancel()
+        refreshShortcutState()
+        shortcutRefreshWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
             guard NSApp.isActive else { return }
-            self?.refreshAccessibilityState()
+            self?.refreshShortcutState()
         }
-        accessibilityRefreshWorkItem = workItem
+        shortcutRefreshWorkItem = workItem
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.75,
             execute: workItem
@@ -134,7 +147,6 @@ final class AppController: NSObject, NSApplicationDelegate {
             settingsController = makeSettingsController()
         }
         settingsController?.showWindow(nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     private func makeSettingsController() -> SettingsController {
@@ -151,18 +163,14 @@ final class AppController: NSObject, NSApplicationDelegate {
                 self?.blackoutService.applyKeyboardBacklightPreference()
                 self?.updateIncludeKeyboardMenuItem()
             },
-            doubleKeyShortcutPermissionGranted: {
-                DoubleKeyShortcutController.hasAccessibilityPermission
+            doubleKeyShortcutIsActive: { [weak self] in
+                self?.doubleKeyShortcut.isMonitoring ?? false
             },
-            doubleKeyShortcutChanged: { [weak self] shouldRequestAccess in
-                if shouldRequestAccess {
-                    self?.isAwaitingAccessibilityPermission =
-                        !DoubleKeyShortcutController.hasAccessibilityPermission
-                    self?.ensureAccessibilityPermission()
-                } else {
-                    self?.isAwaitingAccessibilityPermission = false
+            doubleKeyShortcutChanged: { [weak self] requestAccess in
+                if requestAccess {
+                    self?.doubleKeyShortcut.requestMonitoringPermission()
                 }
-                self?.updateDoubleKeyShortcut()
+                self?.refreshShortcutState()
             },
             menuBarButtonChanged: { [weak self] _ in
                 self?.applyMenuBarButtonVisibility()
@@ -197,23 +205,9 @@ final class AppController: NSObject, NSApplicationDelegate {
         doubleKeyShortcut.updateMonitoring()
     }
 
-    private func refreshAccessibilityState() {
-        let isPermissionGranted =
-            DoubleKeyShortcutController.hasAccessibilityPermission
-        if isPermissionGranted && isAwaitingAccessibilityPermission {
-            preferences.isDoubleKeyShortcutEnabled = true
-            isAwaitingAccessibilityPermission = false
-        }
+    @objc private func refreshShortcutState() {
         updateDoubleKeyShortcut()
         settingsController?.refresh()
-    }
-
-    private func ensureAccessibilityPermission() {
-        guard !DoubleKeyShortcutController.hasAccessibilityPermission else {
-            isAwaitingAccessibilityPermission = false
-            return
-        }
-        DoubleKeyShortcutController.requestAccessibilityPermission()
     }
 
     private var wasLaunchedAsLoginItem: Bool {
@@ -234,6 +228,12 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        if settingsController?.window?.isVisible == true {
+            UserDefaults.standard.set(
+                true,
+                forKey: Self.restoreSettingsAfterRelaunchKey
+            )
+        }
         blackoutService.restore()
     }
 

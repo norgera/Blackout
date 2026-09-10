@@ -39,7 +39,7 @@ struct SettingsView: View {
             settingsCard(title: "Double-press shortcut") {
                 settingToggle(
                     title: "Enable shortcut",
-                    description: "Double-press a key anywhere to toggle blackout. “Press window” is the allowed delay. Requires Accessibility.",
+                    description: "Double-press a key anywhere to toggle blackout. “Press window” is the allowed delay.",
                     value: binding(
                         get: { model.isDoubleKeyShortcutEnabled },
                         set: model.setDoubleKeyShortcutEnabled

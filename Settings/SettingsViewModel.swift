@@ -7,8 +7,8 @@ final class SettingsViewModel: ObservableObject {
     private let toggleBlackoutAction: () -> Void
     private let touchBarButtonChanged: (Bool) -> Void
     private let keyboardBacklightChanged: (Bool) -> Void
-    private let doubleKeyShortcutPermissionGranted: () -> Bool
-    private let doubleKeyShortcutChanged: (Bool) -> Void
+    private let doubleKeyShortcutIsActive: () -> Bool
+    private let doubleKeyShortcutChanged: (_ requestAccess: Bool) -> Void
     private let menuBarButtonChanged: (Bool) -> Void
     private let dockIconChanged: (Bool) -> Void
     private let quitAction: () -> Void
@@ -36,7 +36,7 @@ final class SettingsViewModel: ObservableObject {
         toggleBlackout: @escaping () -> Void,
         touchBarButtonChanged: @escaping (Bool) -> Void,
         keyboardBacklightChanged: @escaping (Bool) -> Void,
-        doubleKeyShortcutPermissionGranted: @escaping () -> Bool,
+        doubleKeyShortcutIsActive: @escaping () -> Bool,
         doubleKeyShortcutChanged: @escaping (Bool) -> Void,
         menuBarButtonChanged: @escaping (Bool) -> Void,
         dockIconChanged: @escaping (Bool) -> Void,
@@ -47,8 +47,7 @@ final class SettingsViewModel: ObservableObject {
         self.toggleBlackoutAction = toggleBlackout
         self.touchBarButtonChanged = touchBarButtonChanged
         self.keyboardBacklightChanged = keyboardBacklightChanged
-        self.doubleKeyShortcutPermissionGranted =
-            doubleKeyShortcutPermissionGranted
+        self.doubleKeyShortcutIsActive = doubleKeyShortcutIsActive
         self.doubleKeyShortcutChanged = doubleKeyShortcutChanged
         self.menuBarButtonChanged = menuBarButtonChanged
         self.dockIconChanged = dockIconChanged
@@ -80,9 +79,7 @@ final class SettingsViewModel: ObservableObject {
         isTouchBarButtonEnabled = preferences.isTouchBarButtonEnabled
         isTouchBarTapToRestoreEnabled = preferences.isTouchBarTapToRestoreEnabled
         includesKeyboardBacklight = preferences.includesKeyboardBacklight
-        isDoubleKeyShortcutEnabled =
-            preferences.isDoubleKeyShortcutEnabled &&
-            doubleKeyShortcutPermissionGranted()
+        isDoubleKeyShortcutEnabled = preferences.isDoubleKeyShortcutEnabled && doubleKeyShortcutIsActive()
         shortcutKeyName = preferences.doubleKeyShortcutKeyName
         shortcutInterval = preferences.doubleKeyShortcutInterval
         isMenuBarButtonEnabled = preferences.isMenuBarButtonEnabled
@@ -113,10 +110,10 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func setDoubleKeyShortcutEnabled(_ enabled: Bool) {
-        let canEnable = !enabled || doubleKeyShortcutPermissionGranted()
-        preferences.isDoubleKeyShortcutEnabled = enabled && canEnable
-        isDoubleKeyShortcutEnabled = preferences.isDoubleKeyShortcutEnabled
+        preferences.isDoubleKeyShortcutEnabled = enabled
+        isDoubleKeyShortcutEnabled = preferences.isDoubleKeyShortcutEnabled && doubleKeyShortcutIsActive()
         doubleKeyShortcutChanged(enabled)
+        refresh()
     }
 
     func beginRecordingShortcutKey() {
@@ -133,7 +130,7 @@ final class SettingsViewModel: ObservableObject {
         preferences.doubleKeyShortcutKeyName = name
         isRecordingShortcutKey = false
         shortcutKeyName = preferences.doubleKeyShortcutKeyName
-        doubleKeyShortcutChanged(preferences.isDoubleKeyShortcutEnabled)
+        doubleKeyShortcutChanged(false)
     }
 
     func setShortcutInterval(_ interval: TimeInterval) {

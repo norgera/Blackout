@@ -40,8 +40,7 @@ xattr -cr /Applications/Blackout.app
 - Start automatically at login without opening Settings
 - Manually check GitHub for new releases from Settings
 
-<img width="444" height="572" alt="Screenshot 2026-08-08 at 12 20 45 PM" src="https://github.com/user-attachments/assets/69ac2e06-d8e0-49ad-888b-02b0fc7484a6" />
-
+<img width="440" height="568" alt="Screenshot 2026-09-10 at 9 24 27 PM" src="https://github.com/user-attachments/assets/23990582-2fdd-45c4-a4e9-f88e0f9aebef" />
 
 ## How it works
 

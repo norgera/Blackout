@@ -45,6 +45,12 @@ struct SettingsView: View {
                         set: model.setDoubleKeyShortcutEnabled
                     )
                 )
+                .disabled(model.isShortcutToggleDisabled)
+                if let status = model.shortcutStatus {
+                    Text(status)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 HStack {
                     Text("Trigger key")
                     Spacer()
@@ -98,6 +104,9 @@ struct SettingsView: View {
             }
             HStack {
                 Spacer()
+                Button("Restart Blackout") {
+                    model.restart()
+                }
                 Button("Quit Blackout") {
                     model.quit()
                 }

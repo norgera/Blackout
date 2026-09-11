@@ -3,6 +3,10 @@ import Cocoa
 final class AppController: NSObject, NSApplicationDelegate {
     private static let restoreSettingsAfterRelaunchKey =
         "restoreSettingsAfterRelaunch"
+    private static let inputMonitoringRestartWarningBundleIdentifier =
+        "com.apple.accessibility.universalAccessAuthWarn"
+    private static let systemSettingsBundleIdentifier =
+        "com.apple.systempreferences"
 
     private let preferences = PreferencesService.shared
     private let blackoutService = BlackoutService()
@@ -17,6 +21,9 @@ final class AppController: NSObject, NSApplicationDelegate {
     )
     private var settingsController: SettingsController?
     private var shortcutRefreshWorkItem: DispatchWorkItem?
+    private var tccAccessChangedToken: Int32 = -1
+    private var ignoreTCCAccessChangesUntil: TimeInterval = 0
+    private var isAwaitingInputMonitoringRestartDecision = false
     private let includeKeyboardMenuItem = NSMenuItem(
         title: "Include keyboard backlight",
         action: #selector(toggleKeyboardSync),
@@ -31,12 +38,6 @@ final class AppController: NSObject, NSApplicationDelegate {
             button.imagePosition = .imageOnly
             button.toolTip = "Touch Bar Blackout"
         }
-        NSWorkspace.shared.notificationCenter.addObserver(
-            self,
-            selector: #selector(refreshShortcutState),
-            name: NSWorkspace.didActivateApplicationNotification,
-            object: nil
-        )
         blackoutService.configureTouchBarActions()
         configureMenu()
         applyMenuBarButtonVisibility()
@@ -53,10 +54,26 @@ final class AppController: NSObject, NSApplicationDelegate {
             name: NSWorkspace.willPowerOffNotification,
             object: nil
         )
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(workspaceApplicationDidActivate(_:)),
+            name: NSWorkspace.didActivateApplicationNotification,
+            object: nil
+        )
+        notify_register_dispatch(
+            "com.apple.tcc.access.changed",
+            &tccAccessChangedToken,
+            .main
+        ) { [weak self] _ in
+            self?.tccAccessDidChange()
+        }
     }
 
     deinit {
         shortcutRefreshWorkItem?.cancel()
+        if tccAccessChangedToken >= 0 {
+            notify_cancel(tccAccessChangedToken)
+        }
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
@@ -73,6 +90,14 @@ final class AppController: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
+        if isAwaitingInputMonitoringRestartDecision {
+            isAwaitingInputMonitoringRestartDecision = false
+            doubleKeyShortcut.markRestartRequired()
+            settingsController?.refresh()
+            DispatchQueue.main.async { [weak self] in
+                self?.promptToRestartForInputMonitoring()
+            }
+        }
         refreshShortcutState()
         shortcutRefreshWorkItem?.cancel()
         let workItem = DispatchWorkItem { [weak self] in
@@ -163,22 +188,109 @@ final class AppController: NSObject, NSApplicationDelegate {
                 self?.blackoutService.applyKeyboardBacklightPreference()
                 self?.updateIncludeKeyboardMenuItem()
             },
-            doubleKeyShortcutIsActive: { [weak self] in
-                self?.doubleKeyShortcut.isMonitoring ?? false
+            doubleKeyShortcutMonitoringState: { [weak self] in
+                self?.doubleKeyShortcut.monitoringState ?? .disabled
             },
-            doubleKeyShortcutChanged: { [weak self] requestAccess in
-                if requestAccess {
-                    self?.doubleKeyShortcut.requestMonitoringPermission()
+            doubleKeyShortcutChanged: { [weak self] change in
+                guard let self else { return }
+                switch change {
+                case .enabled(true):
+                    if !DoubleKeyShortcutController.hasMonitoringPermission {
+                        ignoreTCCAccessChangesUntil =
+                            ProcessInfo.processInfo.systemUptime + 1
+                    }
+                    let shouldOpenSettings =
+                        doubleKeyShortcut.requestMonitoringPermission()
+                    let state = updateDoubleKeyShortcut()
+                    if state == .failedToStart ||
+                       (state == .permissionRequired && shouldOpenSettings) {
+                        openInputMonitoringSettings()
+                    }
+                    settingsController?.refresh()
+                case .enabled(false), .configurationChanged:
+                    refreshShortcutState()
                 }
-                self?.refreshShortcutState()
             },
             menuBarButtonChanged: { [weak self] _ in
                 self?.applyMenuBarButtonVisibility()
             },
             dockIconChanged: { [weak self] _ in
                 self?.applyDockIconVisibility()
+            },
+            restart: { [weak self] in
+                self?.restart()
             }
         )
+    }
+
+    private func restart() {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(
+            at: Bundle.main.bundleURL,
+            configuration: configuration
+        ) { _, error in
+            guard error == nil else { return }
+            DispatchQueue.main.async {
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    private func openInputMonitoringSettings() {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"
+        ) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    @objc private func workspaceApplicationDidActivate(
+        _ notification: Notification
+    ) {
+        guard let application = notification.userInfo?[
+            NSWorkspace.applicationUserInfoKey
+        ] as? NSRunningApplication else { return }
+        guard application.bundleIdentifier ==
+                Self.inputMonitoringRestartWarningBundleIdentifier,
+              shouldTrackInputMonitoringChange else { return }
+        armInputMonitoringRestartPrompt()
+    }
+
+    private func tccAccessDidChange() {
+        if ProcessInfo.processInfo.systemUptime <
+            ignoreTCCAccessChangesUntil {
+            ignoreTCCAccessChangesUntil = 0
+            return
+        }
+        let frontmostBundleIdentifier =
+            NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+        guard frontmostBundleIdentifier ==
+                Self.systemSettingsBundleIdentifier,
+              shouldTrackInputMonitoringChange else { return }
+        armInputMonitoringRestartPrompt()
+    }
+
+    private var shouldTrackInputMonitoringChange: Bool {
+        preferences.isDoubleKeyShortcutEnabled &&
+            settingsController?.window?.isVisible == true
+    }
+
+    private func armInputMonitoringRestartPrompt() {
+        guard !isAwaitingInputMonitoringRestartDecision else { return }
+        isAwaitingInputMonitoringRestartDecision = true
+    }
+
+    private func promptToRestartForInputMonitoring() {
+        let alert = NSAlert()
+        alert.messageText = "Restart Blackout?"
+        alert.informativeText =
+            "Restart Blackout for the Input Monitoring change to take effect."
+        alert.addButton(withTitle: "Restart")
+        alert.addButton(withTitle: "Later")
+        if alert.runModal() == .alertFirstButtonReturn {
+            restart()
+        }
     }
 
     private func applyTouchBarButtonVisibility(_ enabled: Bool) {
@@ -201,7 +313,8 @@ final class AppController: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func updateDoubleKeyShortcut() {
+    @discardableResult
+    private func updateDoubleKeyShortcut() -> DoubleKeyShortcutMonitoringState {
         doubleKeyShortcut.updateMonitoring()
     }
 

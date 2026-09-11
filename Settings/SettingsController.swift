@@ -11,10 +11,11 @@ final class SettingsController: NSWindowController {
         toggleBlackout: @escaping () -> Void,
         touchBarButtonChanged: @escaping (Bool) -> Void,
         keyboardBacklightChanged: @escaping (Bool) -> Void,
-        doubleKeyShortcutIsActive: @escaping () -> Bool,
-        doubleKeyShortcutChanged: @escaping (Bool) -> Void,
+        doubleKeyShortcutMonitoringState: @escaping () -> DoubleKeyShortcutMonitoringState,
+        doubleKeyShortcutChanged: @escaping (DoubleKeyShortcutChange) -> Void,
         menuBarButtonChanged: @escaping (Bool) -> Void,
-        dockIconChanged: @escaping (Bool) -> Void
+        dockIconChanged: @escaping (Bool) -> Void,
+        restart: @escaping () -> Void
     ) {
         viewModel = SettingsViewModel(
             preferences: preferences,
@@ -22,10 +23,11 @@ final class SettingsController: NSWindowController {
             toggleBlackout: toggleBlackout,
             touchBarButtonChanged: touchBarButtonChanged,
             keyboardBacklightChanged: keyboardBacklightChanged,
-            doubleKeyShortcutIsActive: doubleKeyShortcutIsActive,
+            doubleKeyShortcutMonitoringState: doubleKeyShortcutMonitoringState,
             doubleKeyShortcutChanged: doubleKeyShortcutChanged,
             menuBarButtonChanged: menuBarButtonChanged,
             dockIconChanged: dockIconChanged,
+            restart: restart,
             quit: { NSApp.terminate(nil) }
         )
         let window = NSWindow(

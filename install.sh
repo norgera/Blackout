@@ -3,7 +3,7 @@
 set -euo pipefail
 
 readonly BLACKOUT_VERSION="1.1.1"
-readonly BLACKOUT_SHA256="2ea84491bb6cbc5903706e704523f90d0f85ccebd82074b272bd8ad825243413"
+readonly BLACKOUT_SHA256="ea28340cea2efe06f963888d2b0ecd747800b76b2125e2319be35aabfb742634"
 readonly DOWNLOAD_URL="https://github.com/norgera/Blackout/releases/download/v${BLACKOUT_VERSION}/Blackout.dmg"
 readonly INSTALL_PATH="/Applications/Blackout.app"
 

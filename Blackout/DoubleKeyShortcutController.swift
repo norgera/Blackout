@@ -2,12 +2,28 @@ import Cocoa
 import ApplicationServices
 import IOKit.hidsystem
 
+enum DoubleKeyShortcutChange {
+    case enabled(Bool)
+    case configurationChanged
+}
+
+enum DoubleKeyShortcutMonitoringState: Equatable {
+    case disabled
+    case missingKey
+    case permissionRequired
+    case active
+    case restartRequired
+    case failedToStart
+}
+
 final class DoubleKeyShortcutController {
     private let preferences: PreferencesService
     private let toggleHandler: () -> Void
     private var eventTap: CFMachPort?
     private var eventTapSource: CFRunLoopSource?
     private var lastPressTimestamp: TimeInterval?
+    private var requiresRestartForSystemChange = false
+    private(set) var monitoringState = DoubleKeyShortcutMonitoringState.disabled
 
     init(
         preferences: PreferencesService,
@@ -21,30 +37,42 @@ final class DoubleKeyShortcutController {
         removeEventTap()
     }
 
-    var isMonitoring: Bool {
-        guard preferences.isDoubleKeyShortcutEnabled,
-              preferences.doubleKeyShortcutKeyCode != nil,
-              Self.hasMonitoringPermission,
-              let eventTap else { return false }
-        return CGEvent.tapIsEnabled(tap: eventTap)
-    }
-
-    func updateMonitoring() {
-        guard preferences.isDoubleKeyShortcutEnabled,
-              preferences.doubleKeyShortcutKeyCode != nil else {
+    @discardableResult
+    func updateMonitoring() -> DoubleKeyShortcutMonitoringState {
+        guard preferences.isDoubleKeyShortcutEnabled else {
             removeEventTap()
-            return
+            monitoringState = .disabled
+            return monitoringState
+        }
+
+        guard preferences.doubleKeyShortcutKeyCode != nil else {
+            removeEventTap()
+            monitoringState = .missingKey
+            return monitoringState
+        }
+
+        if requiresRestartForSystemChange {
+            monitoringState = .restartRequired
+            return monitoringState
         }
 
         guard Self.hasMonitoringPermission else {
             removeEventTap()
-            return
+            monitoringState = .permissionRequired
+            return monitoringState
         }
 
         if let eventTap {
             CGEvent.tapEnable(tap: eventTap, enable: true)
-            return
+            if CGEvent.tapIsEnabled(tap: eventTap) {
+                monitoringState = .active
+                return monitoringState
+            }
+            removeEventTap()
+            monitoringState = .failedToStart
+            return monitoringState
         }
+
         let eventMask = CGEventMask(1) << CGEventType.keyDown.rawValue |
             CGEventMask(1) << CGEventType.flagsChanged.rawValue
         guard let eventTap = CGEvent.tapCreate(
@@ -55,84 +83,62 @@ final class DoubleKeyShortcutController {
             callback: Self.eventTapCallback,
             userInfo: Unmanaged.passUnretained(self).toOpaque()
         ) else {
-            return
+            monitoringState = .failedToStart
+            return monitoringState
         }
-        let source = CFMachPortCreateRunLoopSource(
+        guard let source = CFMachPortCreateRunLoopSource(
             kCFAllocatorDefault,
             eventTap,
             0
-        )
+        ) else {
+            CFMachPortInvalidate(eventTap)
+            monitoringState = .failedToStart
+            return monitoringState
+        }
         self.eventTap = eventTap
         eventTapSource = source
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
+        guard CGEvent.tapIsEnabled(tap: eventTap) else {
+            removeEventTap()
+            monitoringState = .failedToStart
+            return monitoringState
+        }
+        monitoringState = .active
+        return monitoringState
+    }
+
+    func markRestartRequired() {
+        guard preferences.isDoubleKeyShortcutEnabled else { return }
+        requiresRestartForSystemChange = true
+        monitoringState = .restartRequired
     }
 
     static var hasMonitoringPermission: Bool {
         if #available(macOS 10.15, *) {
-            return IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) ==
-                kIOHIDAccessTypeGranted
+            return CGPreflightListenEventAccess()
         }
         return AXIsProcessTrusted()
     }
 
-    func requestMonitoringPermission() {
-        guard !Self.hasMonitoringPermission else { return }
+    @discardableResult
+    func requestMonitoringPermission() -> Bool {
+        guard preferences.isDoubleKeyShortcutEnabled,
+              !Self.hasMonitoringPermission else { return false }
         if #available(macOS 10.15, *) {
-            // Make the running app discoverable by the permission settings UI.
-            _ = LSRegisterURL(Bundle.main.bundleURL as CFURL, true)
             let access = IOHIDCheckAccess(kIOHIDRequestTypeListenEvent)
-            if access == kIOHIDAccessTypeDenied, eventTap != nil {
-                removeEventTap()
-            }
-            switch access {
-            case kIOHIDAccessTypeUnknown:
-                _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
-            case kIOHIDAccessTypeDenied:
-                showPermissionRestartAlert()
-            default:
-                break
-            }
-            return
+            // Make the running app discoverable by the permission settings UI.
+            _ = LSRegisterURL(
+                Bundle.main.bundleURL as CFURL,
+                true
+            )
+            _ = IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+            return access == kIOHIDAccessTypeDenied
         }
         let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue()
         let options = [promptKey as String: true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
-    }
-
-    @available(macOS 10.15, *)
-    private func showPermissionRestartAlert() {
-        let alert = NSAlert()
-        alert.messageText = "Restart Blackout"
-        alert.informativeText = "Restart Blackout for changes in System Settings to take effect."
-        alert.addButton(withTitle: "Quit & Reopen")
-        alert.addButton(withTitle: "Later")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-
-        let configuration = NSWorkspace.OpenConfiguration()
-        configuration.activates = true
-        configuration.createsNewApplicationInstance = true
-        NSWorkspace.shared.openApplication(
-            at: Bundle.main.bundleURL,
-            configuration: configuration
-        ) { _, error in
-            DispatchQueue.main.async {
-                guard error == nil else {
-                    Self.showRelaunchError(error)
-                    return
-                }
-                NSApp.windows.forEach { $0.orderOut(nil) }
-                NSApp.terminate(nil)
-            }
-        }
-    }
-
-    private static func showRelaunchError(_ error: Error?) {
-        let alert = NSAlert()
-        alert.messageText = "Blackout could not reopen"
-        alert.informativeText = error?.localizedDescription ??
-            "Quit and reopen Blackout manually."
-        alert.runModal()
+        return false
     }
 
     private static let eventTapCallback: CGEventTapCallBack = {
@@ -146,6 +152,15 @@ final class DoubleKeyShortcutController {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let eventTap = controller.eventTap {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
+                let hasPermission =
+                    DoubleKeyShortcutController.hasMonitoringPermission
+                if CGEvent.tapIsEnabled(tap: eventTap) {
+                    controller.monitoringState = hasPermission ?
+                        .active : .permissionRequired
+                } else {
+                    controller.monitoringState = hasPermission ?
+                        .failedToStart : .permissionRequired
+                }
             }
         } else if let event = NSEvent(cgEvent: event) {
             controller.handle(event)
